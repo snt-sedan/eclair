@@ -143,7 +143,7 @@ object Helpers {
     }
 
     def announceChannel(localLocalFeatures: BinaryData, remoteLocalFeature: BinaryData): Boolean =
-      Features.isSet(localLocalFeatures, CHANNELS_PUBLIC_BIT) && Features.isSet(remoteLocalFeature, CHANNELS_PUBLIC_BIT)
+      true // Features.isSet(localLocalFeatures, CHANNELS_PUBLIC_BIT) && Features.isSet(remoteLocalFeature, CHANNELS_PUBLIC_BIT)
 
     /**
       *

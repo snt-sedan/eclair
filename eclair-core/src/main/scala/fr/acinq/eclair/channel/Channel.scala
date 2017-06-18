@@ -489,13 +489,13 @@ class Channel(val nodeParams: NodeParams, remoteNodeId: PublicKey, blockchain: A
         case Failure(cause) => handleLocalError(cause, d)
       }
 
-    case Event(c@CMD_UPDATE_FEE(feeratePerKw, do_commit), d: DATA_NORMAL) =>
-      Try(Commitments.sendFee(d.commitments, c)) match {
-        case Success((commitments1, fail)) =>
-          if (do_commit) self ! CMD_SIGN
-          handleCommandSuccess(sender, d.copy(commitments = commitments1))
-        case Failure(cause) => handleCommandError(sender, cause)
-      }
+//    case Event(c@CMD_UPDATE_FEE(feeratePerKw, do_commit), d: DATA_NORMAL) =>
+//      Try(Commitments.sendFee(d.commitments, c)) match {
+//        case Success((commitments1, fail)) =>
+//          if (do_commit) self ! CMD_SIGN
+//          handleCommandSuccess(sender, d.copy(commitments = commitments1))
+//        case Failure(cause) => handleCommandError(sender, cause)
+//      }
 
     case Event(fee: UpdateFee, d: DATA_NORMAL) =>
       Try(Commitments.receiveFee(d.commitments, fee, nodeParams.maxFeerateMismatch)) match {

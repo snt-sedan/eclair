@@ -22,6 +22,11 @@ object LightningMessageCodecs {
   // (for something smarter see https://github.com/yzernik/bitcoin-scodec/blob/master/src/main/scala/io/github/yzernik/bitcoinscodec/structures/UInt64.scala)
   val uint64: Codec[Long] = int64.narrow(l => if (l >= 0) Attempt.Successful(l) else Attempt.failure(Err(s"overflow for value $l")), l => l)
 
+  val uint64_ex: Codec[Long] = int64.narrow(l =>
+    if (l >= 0) Attempt.Successful(l)
+    else if (l == -1L) Attempt.Successful(Long.MaxValue)
+    else Attempt.failure(Err(s"overflow for value $l")), l => l)
+
   def binarydata(size: Int): Codec[BinaryData] = limitedSizeBytes(size, bytesStrict(size).xmap(d => BinaryData(d.toArray), d => ByteVector(d.data)))
 
   def varsizebinarydata: Codec[BinaryData] = variableSizeBytes(uint16, bytes.xmap(d => BinaryData(d.toArray), d => ByteVector(d.data)))
@@ -116,7 +121,7 @@ object LightningMessageCodecs {
       ("dustLimitSatoshis" | uint64) ::
       ("maxHtlcValueInFlightMsat" | uint64) ::
       ("channelReserveSatoshis" | uint64) ::
-      ("htlcMinimumMsat" | uint32) ::
+      ("htlcMinimumMsat" | uint64) ::
       ("feeratePerKw" | uint32) ::
       ("toSelfDelay" | uint16) ::
       ("maxAcceptedHtlcs" | uint16) ::
@@ -129,10 +134,10 @@ object LightningMessageCodecs {
   val acceptChannelCodec: Codec[AcceptChannel] = (
     ("temporaryChannelId" | binarydata(32)) ::
       ("dustLimitSatoshis" | uint64) ::
-      ("maxHtlcValueInFlightMsat" | uint64) ::
+      ("maxHtlcValueInFlightMsat" | uint64_ex) ::
       ("channelReserveSatoshis" | uint64) ::
+      ("htlcMinimumMsat" | uint64) ::
       ("minimumDepth" | uint32) ::
-      ("htlcMinimumMsat" | uint32) ::
       ("toSelfDelay" | uint16) ::
       ("maxAcceptedHtlcs" | uint16) ::
       ("fundingPubkey" | publicKey) ::
@@ -167,9 +172,9 @@ object LightningMessageCodecs {
   val updateAddHtlcCodec: Codec[UpdateAddHtlc] = (
     ("channelId" | binarydata(32)) ::
       ("id" | uint64) ::
-      ("amountMsat" | uint32) ::
-      ("expiry" | uint32) ::
+      ("amountMsat" | uint64) ::
       ("paymentHash" | binarydata(32)) ::
+      ("expiry" | uint32) ::
       ("onionRoutingPacket" | binarydata(Sphinx.PacketLength))).as[UpdateAddHtlc]
 
   val updateFulfillHtlcCodec: Codec[UpdateFulfillHtlc] = (
@@ -241,7 +246,7 @@ object LightningMessageCodecs {
       ("timestamp" | uint32) ::
       ("flags" | binarydata(2)) ::
       ("cltvExpiryDelta" | uint16) ::
-      ("htlcMinimumMsat" | uint32) ::
+      ("htlcMinimumMsat" | uint64) ::
       ("feeBaseMsat" | uint32) ::
       ("feeProportionalMillionths" | uint32))
 

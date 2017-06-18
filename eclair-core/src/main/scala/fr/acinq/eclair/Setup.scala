@@ -7,7 +7,7 @@ import akka.actor.{ActorRef, ActorSystem, Props, SupervisorStrategy}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import fr.acinq.bitcoin.{Base58Check, OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160, OP_PUSHDATA, Script}
+import fr.acinq.bitcoin.{Base58Check, Block, OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160, OP_PUSHDATA, Script}
 import fr.acinq.eclair.api.Service
 import fr.acinq.eclair.blockchain.rpc.BitcoinJsonRPCClient
 import fr.acinq.eclair.blockchain.zmq.ZMQActor
@@ -56,7 +56,8 @@ class Setup(datadir: File, actorSystemName: String = "default") extends Logging 
     chain = (json \ "chain").extract[String]
     blockCount = (json \ "blocks").extract[Long]
     progress = (json \ "verificationprogress").extract[Double]
-    chainHash <- bitcoinClient.client.invoke("getblockhash", 0).map(_.extract[String])
+    chainHash = Block.LivenetGenesisBlock.blockId.toString()
+    // chainHash <- bitcoinClient.client.invoke("getblockhash", 0).map(_.extract[String])
   } yield (chain, blockCount, progress, chainHash)
   val (chain, blockCount, progress, chainHash) = Try(Await.result(future, 10 seconds)).recover { case _ => throw BitcoinRPCConnectionException }.get
   logger.info(s"using chain=$chain chainHash=$chainHash")
