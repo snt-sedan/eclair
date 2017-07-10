@@ -9,7 +9,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import fr.acinq.bitcoin.Crypto.{PrivateKey, PublicKey}
 import fr.acinq.bitcoin.DeterministicWallet.ExtendedPrivateKey
 import fr.acinq.bitcoin.{BinaryData, DeterministicWallet}
-import fr.acinq.eclair.channel.Data
+import fr.acinq.eclair.channel.{Data, HasCommitments}
 import fr.acinq.eclair.db.{Dbs, SimpleFileDb, SimpleTypedDb}
 import fr.acinq.eclair.io.PeerRecord
 import fr.acinq.eclair.wire.LightningMessage
@@ -38,7 +38,7 @@ case class NodeParams(extendedPrivateKey: ExtendedPrivateKey,
                       feeProportionalMillionth: Int,
                       reserveToFundingRatio: Double,
                       maxReserveToFundingRatio: Double,
-                      channelsDb: SimpleTypedDb[BinaryData, Data],
+                      channelsDb: SimpleTypedDb[BinaryData, HasCommitments],
                       peersDb: SimpleTypedDb[PublicKey, PeerRecord],
                       announcementsDb: SimpleTypedDb[String, LightningMessage],
                       routerBroadcastInterval: FiniteDuration,

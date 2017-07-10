@@ -36,7 +36,7 @@ case class ChannelInfo(val announcement: ChannelAnnouncement, var isNode1Enabled
 /**
   * Created by DPA on 22/09/2016.
   */
-class MainController(val handlers: Handlers, val setup: Setup, val hostServices: HostServices) extends Logging {
+class MainController(val handlers: Handlers, val hostServices: HostServices) extends Logging {
 
   @FXML var root: AnchorPane = _
   var contextMenu: ContextMenu = _
@@ -120,19 +120,19 @@ class MainController(val handlers: Handlers, val setup: Setup, val hostServices:
   @FXML def initialize = {
 
     // init status bar
-    labelNodeId.setText(s"${setup.nodeParams.privateKey.publicKey}")
+    /*labelNodeId.setText(s"${setup.nodeParams.privateKey.publicKey}")
     labelAlias.setText(s"${setup.nodeParams.alias}")
     rectRGB.setFill(Color.rgb(setup.nodeParams.color._1 & 0xFF, setup.nodeParams.color._2 & 0xFF, setup.nodeParams.color._3 & 0xFF))
     labelApi.setText(s"${setup.config.getInt("api.port")}")
     labelServer.setText(s"${setup.config.getInt("server.port")}")
     bitcoinVersion.setText(s"v${setup.bitcoinVersion}")
     bitcoinChain.setText(s"${setup.chain.toUpperCase()}")
-    bitcoinChain.getStyleClass.add(setup.chain)
+    bitcoinChain.getStyleClass.add(setup.chain)*/
 
     // init context
-    contextMenu = ContextMenuUtils.buildCopyContext(List(
+    /*contextMenu = ContextMenuUtils.buildCopyContext(List(
       new CopyAction("Copy Pubkey", s"${setup.nodeParams.privateKey.publicKey}"),
-      new CopyAction("Copy URI", s"${setup.nodeParams.privateKey.publicKey}@${setup.nodeParams.address.getHostString}:${setup.nodeParams.address.getPort}")))
+      new CopyAction("Copy URI", s"${setup.nodeParams.privateKey.publicKey}@${setup.nodeParams.address.getHostString}:${setup.nodeParams.address.getPort}")))*/
 
     // init channels tab
     if (channelBox.getChildren.size() > 0) {
@@ -396,25 +396,25 @@ class MainController(val handlers: Handlers, val setup: Setup, val hostServices:
     fileChooser.setTitle("Save as")
     fileChooser.getExtensionFilters.addAll(new ExtensionFilter("DOT File (*.dot)", "*.dot"))
     val file = fileChooser.showSaveDialog(getWindow.getOrElse(null))
-    if (file != null) handlers.exportToDot(file)
+    //if (file != null) handlers.exportToDot(file)
   }
 
   @FXML def handleOpenChannel = {
-    val openChannelStage = new OpenChannelStage(handlers, setup)
+    val openChannelStage = new OpenChannelStage(handlers, handlers.setup)
     openChannelStage.initOwner(getWindow.getOrElse(null))
     positionAtCenter(openChannelStage)
     openChannelStage.show
   }
 
   @FXML def handleSendPayment = {
-    val sendPaymentStage = new SendPaymentStage(handlers, setup)
+    val sendPaymentStage = new SendPaymentStage(handlers, handlers.setup)
     sendPaymentStage.initOwner(getWindow.getOrElse(null))
     positionAtCenter(sendPaymentStage)
     sendPaymentStage.show
   }
 
   @FXML def handleReceivePayment = {
-    val receiveStage = new ReceivePaymentStage(handlers, setup)
+    val receiveStage = new ReceivePaymentStage(handlers, handlers.setup)
     receiveStage.initOwner(getWindow.getOrElse(null))
     positionAtCenter(receiveStage)
     receiveStage.show

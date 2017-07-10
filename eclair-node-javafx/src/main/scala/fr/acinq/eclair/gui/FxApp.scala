@@ -9,7 +9,7 @@ import javafx.scene.image.Image
 import javafx.scene.{Parent, Scene}
 import javafx.stage.{Popup, Screen, Stage, WindowEvent}
 
-import akka.actor.{Props, SupervisorStrategy}
+import akka.actor.{ActorSystem, Props, SupervisorStrategy}
 import fr.acinq.eclair._
 import fr.acinq.eclair.blockchain.zmq.ZMQEvents
 import fr.acinq.eclair.channel.ChannelEvent
@@ -36,15 +36,16 @@ class FxApp extends Application with Logging {
       override def run(): Unit = {
         try {
           val datadir = new File(getParameters.getUnnamed.get(0))
-
+          implicit val system: ActorSystem = ActorSystem("system")
+          val handlers = new Handlers
+          val controller = new MainController(handlers, getHostServices)
+          val guiUpdater = system.actorOf(SimpleSupervisor.props(Props(classOf[GUIUpdater], controller), "gui-updater", SupervisorStrategy.Resume))
+          system.eventStream.subscribe(guiUpdater, classOf[ChannelEvent])
+          system.eventStream.subscribe(guiUpdater, classOf[NetworkEvent])
+          system.eventStream.subscribe(guiUpdater, classOf[PaymentEvent])
+          system.eventStream.subscribe(guiUpdater, classOf[ZMQEvents])
           val setup = new Setup(datadir)
-          val handlers = new Handlers(setup)
-          val controller = new MainController(handlers, setup, getHostServices)
-          val guiUpdater = setup.system.actorOf(SimpleSupervisor.props(Props(classOf[GUIUpdater], controller), "gui-updater", SupervisorStrategy.Resume))
-          setup.system.eventStream.subscribe(guiUpdater, classOf[ChannelEvent])
-          setup.system.eventStream.subscribe(guiUpdater, classOf[NetworkEvent])
-          setup.system.eventStream.subscribe(guiUpdater, classOf[PaymentEvent])
-          setup.system.eventStream.subscribe(guiUpdater, classOf[ZMQEvents])
+          handlers._setup = setup
 
           Platform.runLater(new Runnable {
             override def run(): Unit = {

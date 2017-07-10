@@ -28,7 +28,7 @@ import scala.util.Try
 /**
   * Created by PM on 25/01/2016.
   */
-class Setup(datadir: File, actorSystemName: String = "default") extends Logging {
+class Setup(datadir: File, actorSystemName: String = "default")(implicit val system: ActorSystem = ActorSystem(actorSystemName)) extends Logging {
 
   logger.info(s"hello!")
   logger.info(s"version=${getClass.getPackage.getImplementationVersion} commit=${getClass.getPackage.getSpecificationVersion}")
@@ -38,7 +38,7 @@ class Setup(datadir: File, actorSystemName: String = "default") extends Logging 
   // this will force the secure random instance to initialize itself right now, making sure it doesn't hang later (see comment in package.scala)
   secureRandom.nextInt()
 
-  implicit lazy val system = ActorSystem(actorSystemName)
+  //implicit lazy val system = ActorSystem(actorSystemName)
   implicit val materializer = ActorMaterializer()
   implicit val timeout = Timeout(30 seconds)
 
@@ -119,8 +119,6 @@ class Setup(datadir: File, actorSystemName: String = "default") extends Logging 
 
   val tasks = new Thread(new Runnable() {
     override def run(): Unit = {
-      nodeParams.peersDb.values.foreach(rec => switchboard ! rec)
-      nodeParams.channelsDb.values.foreach(rec => switchboard ! rec)
       nodeParams.announcementsDb.values.collect { case ann: ChannelAnnouncement => router ! ann }
       nodeParams.announcementsDb.values.collect { case ann: NodeAnnouncement => router ! ann }
       nodeParams.announcementsDb.values.collect { case ann: ChannelUpdate => router ! ann }

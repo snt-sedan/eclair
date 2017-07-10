@@ -21,9 +21,11 @@ import scala.util.{Failure, Success}
 /**
   * Created by PM on 16/08/2016.
   */
-class Handlers(setup: Setup) extends Logging {
+class Handlers extends Logging {
 
-  import setup._
+  var _setup: Setup = _
+
+  def setup = _setup
 
   private var notifsController: Option[NotificationsController] = None
 
@@ -39,6 +41,8 @@ class Handlers(setup: Setup) extends Logging {
     * @param channel
     */
   def open(hostPort: String, channel: Option[NewChannel]) = {
+    implicit val ec = setup.ec
+    implicit val timeout = setup.timeout
     hostPort match {
       case GUIValidators.hostRegex(remoteNodeId, host, port) =>
         logger.info(s"opening a channel with remoteNodeId=$remoteNodeId")
@@ -55,8 +59,10 @@ class Handlers(setup: Setup) extends Logging {
   }
 
   def send(nodeId: PublicKey, paymentHash: BinaryData, amountMsat: Long) = {
+    implicit val ec = setup.ec
+    implicit val timeout = setup.timeout
     logger.info(s"sending $amountMsat to $paymentHash @ $nodeId")
-    (paymentInitiator ? SendPayment(amountMsat, paymentHash, nodeId)).mapTo[PaymentResult].onComplete {
+    (setup.paymentInitiator ? SendPayment(amountMsat, paymentHash, nodeId)).mapTo[PaymentResult].onComplete {
       case Success(PaymentSucceeded(_)) =>
         val message = s"${NumberFormat.getInstance(Locale.getDefault).format(amountMsat/1000)} satoshis"
         notification("Payment Sent", message, NOTIFICATION_SUCCESS)
@@ -69,11 +75,18 @@ class Handlers(setup: Setup) extends Logging {
     }
   }
 
-  def receive(amountMsat: MilliSatoshi, description: String): Future[String] =
-    (paymentHandler ? ReceivePayment(amountMsat, description)).mapTo[PaymentRequest].map(PaymentRequest.write(_))
+  def receive(amountMsat: MilliSatoshi, description: String): Future[String] = {
+    implicit val ec = setup.ec
+    implicit val timeout = setup.timeout
+    (setup.paymentHandler ? ReceivePayment(amountMsat, description)).mapTo[PaymentRequest].map(PaymentRequest.write(_))
+  }
 
-  def exportToDot(file: File) = (router ? 'dot).mapTo[String].map(
-    dot => printToFile(file)(writer => writer.write(dot)))
+  def exportToDot(file: File) = {
+    implicit val ec = setup.ec
+    implicit val timeout = setup.timeout
+    (setup.router ? 'dot).mapTo[String].map(
+      dot => printToFile(file)(writer => writer.write(dot)))
+  }
 
   private def printToFile(f: java.io.File)(op: java.io.FileWriter => Unit) {
     val p = new FileWriter(f)
